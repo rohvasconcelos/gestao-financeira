@@ -1,4 +1,4 @@
-const { makeWASocket, useSingleFileAuthState } = require("@whiskeysockets/baileys");
+const { makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys");
 const { writeFileSync } = require("fs");
 const mongoose = require("mongoose");
 require("dotenv").config();
@@ -17,7 +17,7 @@ const DespesaSchema = new mongoose.Schema({
 const Despesa = mongoose.model("Despesa", DespesaSchema);
 
 // Configurar autenticação do WhatsApp
-const { state, saveState } = useSingleFileAuthState("./auth_info.json");
+const { state, saveState } = useMultiFileAuthState("./auth_info");
 const sock = makeWASocket({ auth: state });
 
 sock.ev.on("creds.update", saveState);
