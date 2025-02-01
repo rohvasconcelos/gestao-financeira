@@ -15,6 +15,7 @@
     "@whiskeysockets/baileys": "^6.7.12",
     "dotenv": "^16.4.7",
     "mongoose": "^8.9.6",
+    "openai": "^4.82.0",
     "qrcode-terminal": "^0.12.0"
   }
 }
