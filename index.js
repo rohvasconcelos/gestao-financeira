@@ -7,19 +7,10 @@ import dotenv from 'dotenv';
 // Configurações iniciais
 dotenv.config();
 
-// Conectar ao MongoDB
-async function connectToMongoDB() {
-  try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log("✅ Conectado ao MongoDB");
-  } catch (error) {
-    console.error("❌ Erro ao conectar ao MongoDB:", error);
-    process.exit(1); // Encerra o aplicativo em caso de erro
-  }
-}
+// Conectar ao MongoDB sem os parâmetros desnecessários
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ Conectado ao MongoDB"))
+  .catch(err => console.error("❌ Erro ao conectar ao MongoDB:", err));
 
 // Definir modelo para despesas
 const DespesaSchema = new mongoose.Schema({
@@ -33,9 +24,7 @@ const Despesa = mongoose.model("Despesa", DespesaSchema);
 
 // Função para interpretar mensagens com regex
 function interpretarMensagem(texto) {
-  // Padrão para despesas simples (ex: "ifood 144")
   const padraoSimples = /^(\w+)\s+(\d+)$/;
-  // Padrão para parcelamentos (ex: "parcela 3x 150")
   const padraoParcela = /^parcela\s+(\d+)x\s+(\d+)$/i;
 
   const matchSimples = texto.match(padraoSimples);
@@ -109,6 +98,19 @@ async function connectToWhatsApp() {
       }
     } else if (connection === 'open') {
       console.log('✅ Conectado ao WhatsApp com sucesso!');
+
+      // Enviar a primeira mensagem explicando o que o bot pode fazer
+      const numeroDestino = '5592981731071@c.us'; // Substitua pelo número para o qual você deseja enviar a mensagem
+      await sock.sendMessage(numeroDestino, {
+        text: `✅ O bot foi iniciado com sucesso! Eu posso te ajudar com:
+
+1. Registrar uma despesa no formato: 'Categoria Valor' (ex: ifood 144)
+2. Registrar parcelas no formato: 'parcela Xx Valor' (ex: parcela 3x 150)
+3. Consultar seu saldo com o comando 'saldo'.
+4. Gerar um relatório de seus gastos com o comando 'relatorio'.
+
+Como posso te ajudar?`
+      });
     }
   });
 
@@ -122,7 +124,6 @@ async function connectToWhatsApp() {
           if (remoteJid && texto) {
             const usuario = remoteJid.split('@')[0];
 
-            // Interpretar mensagem com regex
             const despesa = interpretarMensagem(texto);
 
             if (despesa) {
@@ -151,8 +152,4 @@ async function connectToWhatsApp() {
   sock.ev.on('creds.update', saveCreds);
 }
 
-// Iniciar conexão com o MongoDB e WhatsApp
-(async () => {
-  await connectToMongoDB();
-  connectToWhatsApp();
-})();
+connectToWhatsApp();
