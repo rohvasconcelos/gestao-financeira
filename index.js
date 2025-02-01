@@ -24,9 +24,7 @@ const Despesa = mongoose.model("Despesa", DespesaSchema);
 
 // Função para interpretar mensagens com regex
 function interpretarMensagem(texto) {
-  // Padrão para despesas simples (ex: "ifood 144")
   const padraoSimples = /^(\w+)\s+(\d+)$/;
-  // Padrão para parcelamentos (ex: "parcela 3x 150")
   const padraoParcela = /^parcela\s+(\d+)x\s+(\d+)$/i;
 
   const matchSimples = texto.match(padraoSimples);
@@ -80,7 +78,7 @@ async function connectToWhatsApp() {
     printQRInTerminal: true
   });
 
-  sock.ev.on('connection.update', (update) => {
+  sock.ev.on('connection.update', async (update) => { // Tornando esta função assíncrona
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
@@ -100,6 +98,10 @@ async function connectToWhatsApp() {
       }
     } else if (connection === 'open') {
       console.log('✅ Conectado ao WhatsApp com sucesso!');
+
+      // Enviar uma mensagem automática para o número específico assim que a conexão for aberta
+      const numeroDestino = '5592981731071@c.us'; // Substitua pelo número para o qual você deseja enviar a mensagem
+      await sock.sendMessage(numeroDestino, { text: '✅ O bot foi iniciado com sucesso! Como posso te ajudar?' });
     }
   });
 
@@ -113,7 +115,6 @@ async function connectToWhatsApp() {
           if (remoteJid && texto) {
             const usuario = remoteJid.split('@')[0];
 
-            // Interpretar mensagem com regex
             const despesa = interpretarMensagem(texto);
 
             if (despesa) {
