@@ -78,7 +78,7 @@ async function connectToWhatsApp() {
     printQRInTerminal: true
   });
 
-  sock.ev.on('connection.update', async (update) => { // Tornando esta função assíncrona
+  sock.ev.on('connection.update', async (update) => {  // Alterado para função assíncrona
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
@@ -99,7 +99,7 @@ async function connectToWhatsApp() {
     } else if (connection === 'open') {
       console.log('✅ Conectado ao WhatsApp com sucesso!');
 
-      // Enviar uma mensagem automática para o número específico assim que a conexão for aberta
+      // Enviar uma mensagem automática para um número específico assim que a conexão for aberta
       const numeroDestino = '5592981731071@c.us'; // Substitua pelo número para o qual você deseja enviar a mensagem
       await sock.sendMessage(numeroDestino, { text: '✅ O bot foi iniciado com sucesso! Como posso te ajudar?' });
     }
@@ -143,4 +143,4 @@ async function connectToWhatsApp() {
   sock.ev.on('creds.update', saveCreds);
 }
 
-connectToWhatsApp();
+connectToWhatsApp();  // Chama a função de conexão com o WhatsApp
