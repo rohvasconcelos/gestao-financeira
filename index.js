@@ -8,9 +8,18 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Conectar ao MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ Conectado ao MongoDB"))
-  .catch(err => console.error("❌ Erro ao conectar ao MongoDB:", err));
+async function connectToMongoDB() {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log("✅ Conectado ao MongoDB");
+  } catch (error) {
+    console.error("❌ Erro ao conectar ao MongoDB:", error);
+    process.exit(1); // Encerra o aplicativo em caso de erro
+  }
+}
 
 // Definir modelo para despesas
 const DespesaSchema = new mongoose.Schema({
@@ -24,7 +33,9 @@ const Despesa = mongoose.model("Despesa", DespesaSchema);
 
 // Função para interpretar mensagens com regex
 function interpretarMensagem(texto) {
+  // Padrão para despesas simples (ex: "ifood 144")
   const padraoSimples = /^(\w+)\s+(\d+)$/;
+  // Padrão para parcelamentos (ex: "parcela 3x 150")
   const padraoParcela = /^parcela\s+(\d+)x\s+(\d+)$/i;
 
   const matchSimples = texto.match(padraoSimples);
@@ -78,7 +89,7 @@ async function connectToWhatsApp() {
     printQRInTerminal: true
   });
 
-  sock.ev.on('connection.update', async (update) => {
+  sock.ev.on('connection.update', (update) => {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
@@ -98,16 +109,6 @@ async function connectToWhatsApp() {
       }
     } else if (connection === 'open') {
       console.log('✅ Conectado ao WhatsApp com sucesso!');
-
-      // Enviar uma mensagem automática para um número específico assim que a conexão for aberta
-      const numeroDestino = '5592981731071@c.us'; // Substitua pelo número para o qual você deseja enviar a mensagem
-      const mensagemInicial = `✅ O bot foi iniciado com sucesso! Como posso te ajudar?\n\nAqui estão os comandos que você pode usar:\n\n` +
-        `1. **Registrar despesa**: Envie o valor e a categoria, como: "ifood 144" ou "parcela 3x 150".\n` +
-        `2. **Consultar saldo**: Envie a palavra "saldo" para ver seu saldo atual.\n` +
-        `3. **Gerar relatório**: Envie a palavra "relatorio" para obter um resumo dos seus gastos por categoria.\n` +
-        `4. **Ver categorias de despesas**: Envie "categorias" para ver uma lista das categorias de despesas que você pode usar.`;
-
-      await sock.sendMessage(numeroDestino, { text: mensagemInicial });
     }
   });
 
@@ -121,9 +122,7 @@ async function connectToWhatsApp() {
           if (remoteJid && texto) {
             const usuario = remoteJid.split('@')[0];
 
-            // Enviar feedback de que a mensagem foi recebida
-            await sock.sendMessage(remoteJid, { text: '🔄 Sua mensagem foi recebida e está sendo processada...' });
-
+            // Interpretar mensagem com regex
             const despesa = interpretarMensagem(texto);
 
             if (despesa) {
@@ -138,23 +137,9 @@ async function connectToWhatsApp() {
               // Gerar relatório
               const relatorio = await gerarRelatorio(usuario);
               await sock.sendMessage(remoteJid, { text: `📝 Relatório de gastos:\n${relatorio}` });
-            } else if (texto.toLowerCase() === 'categorias') {
-              // Enviar lista de categorias
-              await sock.sendMessage(remoteJid, {
-                text: '📋 Categorias de despesas disponíveis:\n' +
-                  '1. Alimentação\n' +
-                  '2. Transporte\n' +
-                  '3. Lazer\n' +
-                  '4. Saúde\n' +
-                  '5. Educação\n' +
-                  '6. Outros'
-              });
             } else {
               await sock.sendMessage(remoteJid, { text: '❌ Não entendi. Use formatos como "ifood 144" ou "parcela 3x 150".' });
             }
-
-            // Feedback de que a resposta foi processada
-            await sock.sendMessage(remoteJid, { text: '✅ Seu pedido foi processado com sucesso!' });
           }
         }
       }
@@ -166,4 +151,8 @@ async function connectToWhatsApp() {
   sock.ev.on('creds.update', saveCreds);
 }
 
-connectToWhatsApp();  // Chama a função de conexão com o WhatsApp
+// Iniciar conexão com o MongoDB e WhatsApp
+(async () => {
+  await connectToMongoDB();
+  connectToWhatsApp();
+})();
