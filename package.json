@@ -1,6 +1,7 @@
 {
   "name": "gestaofinanceira",
   "version": "1.0.0",
+  "type": "module",
   "description": "bot para trabalhar as financas",
   "main": "index.js",
   "scripts": {
@@ -10,8 +11,10 @@
   "author": "Rodrigo Vasconcelos",
   "license": "ISC",
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.6.0",
+    "@hapi/boom": "^10.0.1",
+    "@whiskeysockets/baileys": "^6.7.12",
     "dotenv": "^16.4.7",
-    "mongoose": "^8.9.6"
+    "mongoose": "^8.9.6",
+    "qrcode-terminal": "^0.12.0"
   }
 }

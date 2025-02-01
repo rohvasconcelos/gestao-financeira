@@ -1,49 +1,41 @@
-const { makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys");
-const { writeFileSync } = require("fs");
-const mongoose = require("mongoose");
-require("dotenv").config();
+import { default as makeWASocket, DisconnectReason, useMultiFileAuthState } from '@whiskeysockets/baileys';
+import { Boom } from '@hapi/boom';
+import qrcode from 'qrcode-terminal';
 
-// Conectar ao MongoDB
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("✅ Conectado ao MongoDB"))
-  .catch(err => console.error("❌ Erro ao conectar ao MongoDB:", err));
+async function connectToWhatsApp() {
+    const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
+    const sock = makeWASocket({
+        auth: state,
+        printQRInTerminal: false
+    });
 
-// Definir modelo para despesas
-const DespesaSchema = new mongoose.Schema({
-  valor: Number,
-  categoria: String,
-  data: { type: Date, default: Date.now }
-});
-const Despesa = mongoose.model("Despesa", DespesaSchema);
+    sock.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect, qr } = update;
 
-// Configurar autenticação do WhatsApp
-const { state, saveState } = useMultiFileAuthState("./auth_info");
-const sock = makeWASocket({ auth: state });
+        if (qr) {
+            console.log('Escaneie o QR Code para conectar:');
+            qrcode.generate(qr, { small: true });
+        }
 
-sock.ev.on("creds.update", saveState);
-sock.ev.on("messages.upsert", async (msg) => {
-  const message = msg.messages[0];
-  if (!message.message || message.key.fromMe) return;
+        if (connection === 'close') {
+            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+            console.log('Conexão fechada devido a', lastDisconnect?.error, ', tentando reconectar:', shouldReconnect);
+            if (shouldReconnect) {
+                connectToWhatsApp();
+            }
+        } else if (connection === 'open') {
+            console.log('Conexão aberta com sucesso!');
+        }
+    });
 
-  const text = message.message.conversation || message.message.extendedTextMessage?.text;
-  const sender = message.key.remoteJid;
+    sock.ev.on('messages.upsert', async (event) => {
+        for (const m of event.messages) {
+            console.log('Mensagem recebida:', JSON.stringify(m, null, 2));
+            await sock.sendMessage(m.key.remoteJid, { text: 'Hello World' });
+        }
+    });
 
-  if (text) {
-    if (text.match(/^\d+ \w+$/)) {
-      // Exemplo: "110 ifood"
-      const [valor, categoria] = text.split(" ");
-      const novaDespesa = new Despesa({ valor: parseFloat(valor), categoria });
-      await novaDespesa.save();
-      
-      sock.sendMessage(sender, { text: `✅ Despesa registrada: R$${valor} em ${categoria}` });
-    } else if (text === "saldo") {
-      // Buscar gastos no MongoDB
-      const despesas = await Despesa.aggregate([
-        { $group: { _id: null, total: { $sum: "$valor" } } }
-      ]);
-      const total = despesas.length > 0 ? despesas[0].total : 0;
-      
-      sock.sendMessage(sender, { text: `📊 Seu saldo do mês: R$${total.toFixed(2)}` });
-    }
-  }
-});
+    sock.ev.on('creds.update', saveCreds);
+}
+
+connectToWhatsApp();
