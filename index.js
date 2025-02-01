@@ -78,7 +78,7 @@ async function connectToWhatsApp() {
     printQRInTerminal: true
   });
 
-  sock.ev.on('connection.update', async (update) => {  // Alterado para função assíncrona
+  sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
@@ -121,6 +121,9 @@ async function connectToWhatsApp() {
           if (remoteJid && texto) {
             const usuario = remoteJid.split('@')[0];
 
+            // Enviar feedback de que a mensagem foi recebida
+            await sock.sendMessage(remoteJid, { text: '🔄 Sua mensagem foi recebida e está sendo processada...' });
+
             const despesa = interpretarMensagem(texto);
 
             if (despesa) {
@@ -149,6 +152,9 @@ async function connectToWhatsApp() {
             } else {
               await sock.sendMessage(remoteJid, { text: '❌ Não entendi. Use formatos como "ifood 144" ou "parcela 3x 150".' });
             }
+
+            // Feedback de que a resposta foi processada
+            await sock.sendMessage(remoteJid, { text: '✅ Seu pedido foi processado com sucesso!' });
           }
         }
       }
