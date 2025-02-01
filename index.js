@@ -1,4 +1,4 @@
-const { default: makeWASocket, useSingleFileAuthState } = require("@whiskeysockets/baileys");
+const { makeWASocket, useSingleFileAuthState } = require("@whiskeysockets/baileys");
 const { writeFileSync } = require("fs");
 const mongoose = require("mongoose");
 require("dotenv").config();
