@@ -10,7 +10,7 @@
   "author": "Rodrigo Vasconcelos",
   "license": "ISC",
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.7.12",
+    "@whiskeysockets/baileys": "^6.6.0",
     "dotenv": "^16.4.7",
     "mongoose": "^8.9.6"
   }
