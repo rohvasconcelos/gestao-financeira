@@ -101,7 +101,7 @@ async function connectToWhatsApp() {
 
       // Enviar a primeira mensagem explicando o que o bot pode fazer
       const numeroDestino = '5592981731071@c.us'; // Substitua pelo número para o qual você deseja enviar a mensagem
-      await sock.sendMessage(numeroDestino, {
+      sock.sendMessage(numeroDestino, {
         text: `✅ O bot foi iniciado com sucesso! Eu posso te ajudar com:
 
 1. Registrar uma despesa no formato: 'Categoria Valor' (ex: ifood 144)
@@ -152,4 +152,5 @@ Como posso te ajudar?`
   sock.ev.on('creds.update', saveCreds);
 }
 
+// Chama a função para iniciar o processo
 connectToWhatsApp();
