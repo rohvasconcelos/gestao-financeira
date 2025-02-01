@@ -101,7 +101,13 @@ async function connectToWhatsApp() {
 
       // Enviar uma mensagem automática para um número específico assim que a conexão for aberta
       const numeroDestino = '5592981731071@c.us'; // Substitua pelo número para o qual você deseja enviar a mensagem
-      await sock.sendMessage(numeroDestino, { text: '✅ O bot foi iniciado com sucesso! Como posso te ajudar?' });
+      const mensagemInicial = `✅ O bot foi iniciado com sucesso! Como posso te ajudar?\n\nAqui estão os comandos que você pode usar:\n\n` +
+        `1. **Registrar despesa**: Envie o valor e a categoria, como: "ifood 144" ou "parcela 3x 150".\n` +
+        `2. **Consultar saldo**: Envie a palavra "saldo" para ver seu saldo atual.\n` +
+        `3. **Gerar relatório**: Envie a palavra "relatorio" para obter um resumo dos seus gastos por categoria.\n` +
+        `4. **Ver categorias de despesas**: Envie "categorias" para ver uma lista das categorias de despesas que você pode usar.`;
+
+      await sock.sendMessage(numeroDestino, { text: mensagemInicial });
     }
   });
 
@@ -129,6 +135,17 @@ async function connectToWhatsApp() {
               // Gerar relatório
               const relatorio = await gerarRelatorio(usuario);
               await sock.sendMessage(remoteJid, { text: `📝 Relatório de gastos:\n${relatorio}` });
+            } else if (texto.toLowerCase() === 'categorias') {
+              // Enviar lista de categorias
+              await sock.sendMessage(remoteJid, {
+                text: '📋 Categorias de despesas disponíveis:\n' +
+                  '1. Alimentação\n' +
+                  '2. Transporte\n' +
+                  '3. Lazer\n' +
+                  '4. Saúde\n' +
+                  '5. Educação\n' +
+                  '6. Outros'
+              });
             } else {
               await sock.sendMessage(remoteJid, { text: '❌ Não entendi. Use formatos como "ifood 144" ou "parcela 3x 150".' });
             }
