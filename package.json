@@ -11,6 +11,6 @@
   "license": "ISC",
   "dependencies": {
     "@whiskeysockets/baileys": "^6.7.12",
-    "mongoose": "^0.0.1-security"
+    "mongoose": "^8.9.6"
   }
 }
